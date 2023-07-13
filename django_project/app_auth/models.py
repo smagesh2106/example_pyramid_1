@@ -27,14 +27,15 @@ class CustomUser(AbstractUser):
 
     # fields
     email = models.EmailField(unique=True)
+    name = models.CharField(max_length=100)
     phone_number = models.CharField(validators=[phone_regex], max_length=17, blank=False, null=False)
     image = models.ImageField()
-    gender = models.CharField(max_length=1, choices=SEX_CHOICES, default=None, required=True)
+    gender = models.CharField(max_length=1, choices=SEX_CHOICES, default=None)
     whatsapp = models.BooleanField(default=False)
     whatsapp_number = models.CharField(validators=[phone_regex], max_length=17, blank=True, null=True)
     identification = models.CharField(max_length=20, choices=ID_PROOF,
-                                      default=None, required=True, null=False, blank=False)
-    identification_detail = models.CharField(max_length=50, default=None, required=True, null=False, blank=False)
+                                      default=None, null=False, blank=False)
+    identification_detail = models.CharField(max_length=50, default=None, null=False, blank=False)
     data_of_birth = models.DateField()
     occupation = models.CharField(max_length=100)
     address = models.TextField(max_length=256)
@@ -42,10 +43,10 @@ class CustomUser(AbstractUser):
     country = models.CharField(max_length=20)
     education = models.CharField(max_length=20)
     pyma_activity = models.CharField(max_length=100)
-    volunteering_week_hrs = models.DecimalField(max_length=3)
+    volunteering_week_hrs = models.DecimalField(max_digits=3,decimal_places=0)
     volunteering_brief = models.CharField(max_length=100)
     volunteering_detail = models.TextField(max_length=256)
-    meditation_exp_years = models.DecimalField(max_length=2, decimal_places=0)
+    meditation_exp_years = models.DecimalField(max_digits=2, decimal_places=0)
     meditation_brief = models.CharField(max_length=100)
     meditation_detail = models.TextField(max_length=256)
     contribution = models.CharField(max_length=100)
@@ -53,7 +54,7 @@ class CustomUser(AbstractUser):
     hobby_level = models.CharField(max_length=100)
     support = models.CharField(max_length=100)
     optional_details = models.TextField(max_length=256)
-    pincode = models.DecimalField(max_length=8, decimal_places=0)
+    pincode = models.DecimalField(max_digits=8, decimal_places=0)
     yfs_knowlege = models.CharField(max_length=15)
     comments_questions = models.TextField(max_length=256)
 
@@ -61,7 +62,7 @@ class CustomUser(AbstractUser):
     # common settings
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name", ]
-    objects = CustomUserManager
+    objects = CustomUserManager()
 
     def __str__(self):
         return self.email
