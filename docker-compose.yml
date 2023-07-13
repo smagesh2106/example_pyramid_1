@@ -1,0 +1,42 @@
+version: '3.7'
+
+networks:
+  pg-net:
+
+services:
+#  order-service:
+#    build: ./orders/
+#    networks: 
+#      - pg-net
+#    volumes:
+#      - static:/static
+#    env_file:
+#      - ./orders/src/.env
+
+
+#  auth-service:
+#    build: ./django_project/
+#    networks: 
+#      - pg-net
+#    volumes:
+#      - static:/static
+#    env_file:
+#      - ./django_project/src/.env
+#    ports:
+#      - "8000:8000"
+
+  nginx:
+    build: ./nginx/
+    networks: 
+      - pg-net
+    volumes:
+      - static:/static
+    ports:
+      - "8080:8080"
+ #   depends_on:
+ #     - auth-service
+ #     - order-service
+
+volumes:
+  static:
+
