@@ -40,6 +40,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'name', 'email', 'password', 'date_of_birth']
+        #fields = '__all__'
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -66,3 +67,9 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     class Meta:
         model = CustomUser
+
+
+class CustomUserListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'name', 'email', 'date_of_birth']

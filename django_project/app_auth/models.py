@@ -33,7 +33,6 @@ class CustomUser(AbstractUser):
     identification = models.CharField(max_length=20, null=True)
     identification_detail = models.CharField(max_length=50, null=True)
     date_of_birth = models.DateField(null=True)
-    # data_of_birth = models.CharField(max_length=20)
     occupation = models.CharField(max_length=100, null=True)
     address = models.TextField(max_length=256, null=True)
     state = models.CharField(max_length=20, null=True)
@@ -70,6 +69,9 @@ class CustomUser(AbstractUser):
         return self.email
 
     def age(self):
-        born = datetime.strptime(self.date_of_birth, "%Y-%m-%d").date()
-        today = date.today()
-        return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+        try:
+            born = datetime.strptime(str(self.date_of_birth), "%Y-%m-%d").date()
+            today = date.today()
+            return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+        except:
+            return 0

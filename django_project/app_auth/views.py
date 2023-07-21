@@ -1,7 +1,10 @@
-from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenViewBase
-from .serializers import MyTokenObtainPairSerializer, CustomUserSerializer, ChangePasswordSerializer
+from .serializers import MyTokenObtainPairSerializer, CustomUserSerializer, ChangePasswordSerializer, \
+    CustomUserListSerializer
 from rest_framework import generics, status, permissions, response, filters, pagination, response, serializers
+from rest_framework.views import APIView
+from rest_framework.decorators import api_view
+from django.http import Http404, HttpResponseForbidden
 from .models import CustomUser
 
 
@@ -62,3 +65,66 @@ class ChangePasswordView(generics.UpdateAPIView):
             }
             return response.Response(resp)
         return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserPagination(pagination.LimitOffsetPagination):
+    default_limit = 20
+    max_limit = 100
+
+
+class UserListView(generics.ListAPIView):
+    permission_classes = (permissions.IsAdminUser,)
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserListSerializer
+    filter_backends = (filters.SearchFilter, filters.OrderingFilter)
+    search_fields = ['name', 'email', 'first_name', 'last_name', 'date_of_birth']
+    pagination_class = UserPagination
+
+
+class UserDeleteView(generics.DestroyAPIView):
+    permission_classes = (permissions.IsAdminUser,)
+    queryset = CustomUser.objects.all()
+
+
+class UserDetailView(APIView):
+    lookup_field = 'id'
+
+    def get_object(self, pk):
+        try:
+            return CustomUser.objects.get(pk=pk)
+        except CustomUser.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        if not request.user.is_admin:
+            u = request.user
+            if u.id != pk:
+                return HttpResponseForbidden()
+        user = self.get_object(pk)
+        serializer = CustomUserSerializer(user)
+        return response.Response(serializer.data)
+
+
+"""
+    def delete(self, request, pk):
+        snippet = self.get_object(pk)
+        snippet.delete()
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
+"""
+
+
+@api_view(['PATCH'])
+def update_items(request, pk):
+    if not request.user.is_admin:
+        u = request.user
+        if u.id != pk:
+            return HttpResponseForbidden()
+
+    user = CustomUser.objects.get(pk=pk)
+    data = CustomUserSerializer(instance=user, data=request.data)
+
+    if data.is_valid():
+        data.save()
+        return response.Response(data.data)
+    else:
+        return response.Response(status=status.HTTP_404_NOT_FOUND)
