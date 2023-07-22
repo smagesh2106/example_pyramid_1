@@ -13,6 +13,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     name = serializers.CharField(min_length=3, max_length=50, required=False)
     email = serializers.EmailField(min_length=8, max_length=50)
     date_of_birth = serializers.CharField(min_length=3, max_length=50, required=False)
+    is_admin = serializers.BooleanField()
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -39,10 +40,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'name', 'email', 'password', 'date_of_birth']
+        fields = ['id', 'name', 'email', 'password', 'date_of_birth', 'is_admin', 'is_staff']
         #fields = '__all__'
         extra_kwargs = {
-            'password': {'write_only': True}
+            'password': {'write_only': True},
+            'is_admin': {'write_only': True},
+            'is_staff': {'write_only': True}
         }
 
 

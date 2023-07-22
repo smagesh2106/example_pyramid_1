@@ -23,12 +23,12 @@ from drf_yasg import openapi
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Jaseci API",
+        title="PYMA API",
         default_version='v1',
-        description="Welcome to the world of Jaseci",
-        terms_of_service="https://www.jaseci.org",
-        contact=openapi.Contact(email="jason@jaseci.org"),
-        license=openapi.License(name="Awesome IP"),
+        description="Welcome to the world of Pyramid Masters",
+        terms_of_service="https://www.pssmglobal.org",
+        contact=openapi.Contact(email="admin@pssmglobal.org"),
+        license=openapi.License(name="PYMA Members Portal"),
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),

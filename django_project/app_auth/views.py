@@ -2,9 +2,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenViewBase
 from .serializers import MyTokenObtainPairSerializer, CustomUserSerializer, ChangePasswordSerializer, \
     CustomUserListSerializer
 from rest_framework import generics, status, permissions, response, filters, pagination, response, serializers
-from rest_framework.views import APIView
 from rest_framework.decorators import api_view
-from django.http import Http404, HttpResponseForbidden
+from rest_framework.decorators import parser_classes
+from rest_framework.parsers import JSONParser
+
 from .models import CustomUser
 
 
@@ -81,6 +82,62 @@ class UserListView(generics.ListAPIView):
     pagination_class = UserPagination
 
 
+@api_view(['DELETE'])
+def delete_user(request, pk):
+    if not request.user.is_admin:
+        return response.Response(status=status.HTTP_403_FORBIDDEN)
+
+    user = None
+    try:
+        user = CustomUser.objects.get(pk=pk)
+    except CustomUser.DoesNotExist:
+        return response.Response(status=status.HTTP_404_NOT_FOUND)
+    user.delete()
+    return response.Response(status=status.HTTP_202_ACCEPTED)
+
+
+@api_view(['GET'])
+def get_user(request, pk):
+    if not request.user.is_admin:
+        u = request.user
+        if u.id != pk:
+            return response.Response(status=status.HTTP_403_FORBIDDEN)
+
+    user = None
+    try:
+        user = CustomUser.objects.get(pk=pk)
+    except CustomUser.DoesNotExist:
+        return response.Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = CustomUserSerializer(user)
+    return response.Response(serializer.data)
+
+
+@api_view(['PATCH', 'PUT'])
+@parser_classes((JSONParser,))
+def update_user(request, pk):
+    if not request.user.is_admin:
+        u = request.user
+        if u.id != pk:
+            return response.Response(status=status.HTTP_403_FORBIDDEN)
+
+    user = None
+    try:
+        user = CustomUser.objects.get(pk=pk)
+    except CustomUser.DoesNotExist:
+        return response.Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = CustomUserSerializer(instance=user, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return response.Response(serializer.data)
+    else:
+        return response.Response(status=status.HTTP_400_BAD_REQUEST, data=serializer.errors)
+
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+"""
 class UserDeleteView(generics.DestroyAPIView):
     permission_classes = (permissions.IsAdminUser,)
     queryset = CustomUser.objects.all()
@@ -105,26 +162,37 @@ class UserDetailView(APIView):
         return response.Response(serializer.data)
 
 
-"""
+
     def delete(self, request, pk):
         snippet = self.get_object(pk)
         snippet.delete()
         return response.Response(status=status.HTTP_204_NO_CONTENT)
-"""
-
-
-@api_view(['PATCH'])
-def update_items(request, pk):
+        
+        
+@api_view(['GET'])
+def get_users(request):
     if not request.user.is_admin:
-        u = request.user
-        if u.id != pk:
-            return HttpResponseForbidden()
+        return response.Response(status=status.HTTP_403_FORBIDDEN)
 
-    user = CustomUser.objects.get(pk=pk)
-    data = CustomUserSerializer(instance=user, data=request.data)
+    users = None
+    # checking for the parameters from the URL
+    query = request.query_params.get('search')
+    print("query  :"+query)
+    if request.query_params:
+        users = CustomUser.objects.filter(**request.query_params.dict())
+    else:
+        users = CustomUser.objects.all()
 
-    if data.is_valid():
-        data.save()
-        return response.Response(data.data)
+    # if there is something in items else raise error
+    if users:
+        page_number = request.query_params.get('offset', 1)
+        page_size = request.query_params.get('limit', 2)
+
+        paginator = Paginator(users, page_size)
+        serializer = CustomUserSerializer(paginator.page(page_number), many=True, context={'request': request})
+        #serializer = CustomUserSerializer(users, many=True)
+        return response.Response(serializer.data)
     else:
         return response.Response(status=status.HTTP_404_NOT_FOUND)
+
+"""
