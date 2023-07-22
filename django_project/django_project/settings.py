@@ -45,9 +45,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_swagger',
     'rest_framework_simplejwt',
+    'rest_framework.authtoken',
     'corsheaders',
     'drf_yasg',
-
+    'django_rest_passwordreset',
 ]
 
 MIDDLEWARE = [
@@ -81,7 +82,7 @@ TEMPLATES = [
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS':
     'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 50,
+    'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'  # <-- Here
 }
 
@@ -216,3 +217,10 @@ SWAGGER_SETTINGS = {
         }
     },
 }
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'hanjes.technologies@gmail.com'
+EMAIL_HOST_PASSWORD = 'ijmfkkqnemacdbgt'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False

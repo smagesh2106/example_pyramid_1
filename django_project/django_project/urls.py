@@ -43,6 +43,5 @@ urlpatterns = [
          name='schema-redoc'),  # <-- Here
 
     path('admin/', admin.site.urls),
-    path('api/v1/', include('app_auth.urls'))
-
+    path('api/v1/', include('app_auth.urls')),
 ]

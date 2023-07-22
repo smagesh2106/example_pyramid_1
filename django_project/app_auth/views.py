@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenViewBase
 from .serializers import MyTokenObtainPairSerializer, CustomUserSerializer, ChangePasswordSerializer, \
-    CustomUserListSerializer
+    CustomUserListSerializer, GrantAdminPrevilege
 from rest_framework import generics, status, permissions, response, filters, pagination, response, serializers
 from rest_framework.decorators import api_view
 from rest_framework.decorators import parser_classes
@@ -15,7 +15,7 @@ class MyTokenObtainPairView(TokenViewBase):
 
 
 # class RegisterView(APIView):
-class RegisterView(generics.CreateAPIView):
+class RegisterView2(generics.CreateAPIView):
     permission_classes = (permissions.AllowAny,)  # required for new user registration
     serializer_class = CustomUserSerializer
     model = CustomUser
@@ -78,7 +78,7 @@ class UserListView(generics.ListAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserListSerializer
     filter_backends = (filters.SearchFilter, filters.OrderingFilter)
-    search_fields = ['name', 'email', 'first_name', 'last_name', 'date_of_birth']
+    search_fields = ['name', 'email', 'date_of_birth']
     pagination_class = UserPagination
 
 
@@ -120,7 +120,7 @@ def update_user(request, pk):
         u = request.user
         if u.id != pk:
             return response.Response(status=status.HTTP_403_FORBIDDEN)
-
+        
     user = None
     try:
         user = CustomUser.objects.get(pk=pk)
