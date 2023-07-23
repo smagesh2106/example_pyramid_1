@@ -1,13 +1,15 @@
-from django.urls import path, include, re_path
+from django.urls import path, include
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
     TokenRefreshView,
     TokenVerifyView,
     TokenBlacklistView,
 )
+
 # from .views import book, MyTokenObtainPairView
-from .views import MyTokenObtainPairView, RegisterView2, ChangePasswordView, UserListView, update_user, \
-    get_user, delete_user #, get_users UserDetailView,UserDeleteView,
+from .views import MyTokenObtainPairView, RegisterView2, ChangePasswordView, UserListView, update_user, UserDeleteView, \
+    get_user, toggle_admin_previlege, AdminUsers
+
+#delete_user, UserDetailedView #, get_users UserDetailView,UserDeleteView,
 
 # Register
 
@@ -21,17 +23,14 @@ urlpatterns = [
     path('token/verify', TokenVerifyView.as_view(), name='token_verify'),
 
     # User List, detailed view, update, delete
+    path('user/admins', AdminUsers.as_view(), name='admin-list'),
     path('users', UserListView.as_view(), name='user-list'),
-    path('user/<int:pk>', get_user, name='user-detail'),
+    path('user/delete/<int:pk>', UserDeleteView.as_view(), name='user-delete'),
+    path('user/<int:pk>', get_user, name='user-detail2'),
     path('user/update/<int:pk>', update_user, name='user-update'),
-    path('user/delete/<int:pk>', delete_user, name='user-delete'),
+    path('user/manage_admin/<int:pk>', toggle_admin_previlege, name='user-upgrade'),
 
     # email password reset
     path('user/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
-    # Old
-    # path('user/delete/<int:pk>', UserDeleteView.as_view(), name='user-delete')
-    # path('user/<int:pk>', UserDetailView.as_view(), name='user-detail'),
-    # path('users', get_users, name='user-list'),
-
 ]
 

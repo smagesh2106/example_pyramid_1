@@ -1,11 +1,13 @@
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenViewBase
 from .serializers import MyTokenObtainPairSerializer, CustomUserSerializer, ChangePasswordSerializer, \
-    CustomUserListSerializer, GrantAdminPrevilege
+    CustomUserListSerializer
 from rest_framework import generics, status, permissions, response, filters, pagination, response, serializers
 from rest_framework.decorators import api_view
 from rest_framework.decorators import parser_classes
 from rest_framework.parsers import JSONParser
-
+from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
+from django.db.models import Q
 from .models import CustomUser
 
 
@@ -29,9 +31,6 @@ class RegisterView2(generics.CreateAPIView):
 
 # Password change View
 class ChangePasswordView(generics.UpdateAPIView):
-    """
-    An endpoint for changing password.
-    """
     serializer_class = ChangePasswordSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -82,52 +81,76 @@ class UserListView(generics.ListAPIView):
     pagination_class = UserPagination
 
 
-@api_view(['DELETE'])
-def delete_user(request, pk):
-    if not request.user.is_admin:
-        return response.Response(status=status.HTTP_403_FORBIDDEN)
-
-    user = None
-    try:
-        user = CustomUser.objects.get(pk=pk)
-    except CustomUser.DoesNotExist:
-        return response.Response(status=status.HTTP_404_NOT_FOUND)
-    user.delete()
-    return response.Response(status=status.HTTP_202_ACCEPTED)
+class UserDeleteView(generics.DestroyAPIView):
+    permission_classes = (permissions.IsAdminUser,)
+    lookup_field = 'pk'
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserListSerializer
 
 
 @api_view(['GET'])
 def get_user(request, pk):
     if not request.user.is_admin:
-        u = request.user
-        if u.id != pk:
-            return response.Response(status=status.HTTP_403_FORBIDDEN)
-
-    user = None
-    try:
-        user = CustomUser.objects.get(pk=pk)
-    except CustomUser.DoesNotExist:
-        return response.Response(status=status.HTTP_404_NOT_FOUND)
-
-    serializer = CustomUserSerializer(user)
-    return response.Response(serializer.data)
+        if request.user.id != pk:
+            return response.Response(status=status.HTTP_403_FORBIDDEN, data={"error": "Only admin or owner can "
+                                                                                      "view this obj."})
+    user = get_object_or_404(CustomUser, pk=pk)
+    data = CustomUserSerializer(user).data
+    return response.Response(data)
 
 
-@api_view(['PATCH', 'PUT'])
+"""
+@api_view(['GET'])
+def get_admins(request):
+    if not request.user.is_admin:
+        return response.Response(status=status.HTTP_403_FORBIDDEN, data={"error": "Only admins are allowed."})
+
+    users = CustomUser.objects.filter(Q(is_admin=True) & Q(is_staff=True))
+    print(users.count())
+    data = CustomUserListSerializer(users, many=True).data
+    return response.Response(data=data)
+"""
+
+
+class AdminUsers(generics.ListAPIView):
+    permission_classes = (permissions.IsAdminUser,)
+    queryset = CustomUser.objects.filter(Q(is_admin=True) & Q(is_staff=True))
+    serializer_class = CustomUserListSerializer
+    filter_backends = (filters.SearchFilter, filters.OrderingFilter)
+    search_fields = ['name', 'email', 'date_of_birth']
+    pagination_class = UserPagination
+
+
+@api_view(['PATCH'])
 @parser_classes((JSONParser,))
 def update_user(request, pk):
     if not request.user.is_admin:
-        u = request.user
-        if u.id != pk:
+        if request.user.id != pk:
             return response.Response(status=status.HTTP_403_FORBIDDEN)
-        
-    user = None
-    try:
-        user = CustomUser.objects.get(pk=pk)
-    except CustomUser.DoesNotExist:
-        return response.Response(status=status.HTTP_404_NOT_FOUND)
 
+    user = get_object_or_404(CustomUser, pk=pk)
     serializer = CustomUserSerializer(instance=user, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return response.Response(serializer.data)
+    else:
+        return response.Response(status=status.HTTP_400_BAD_REQUEST, data=serializer.errors)
+
+
+@api_view(['PATCH'])
+@parser_classes((JSONParser,))
+def toggle_admin_previlege(request, pk):
+    if not request.user.is_superuser:
+        return response.Response(status=status.HTTP_403_FORBIDDEN)
+
+    user = get_object_or_404(CustomUser, pk=pk)
+    print(user._meta.get_field("is_admin"))
+    is_admin = request.data.get("is_admin", False)
+    is_staff = request.data.get("is_staff", False)
+    data = {"is_admin": is_admin, "is_staff": is_staff}
+    print(data)
+    serializer = CustomUserSerializer(instance=user, data=request.data, partial=True)
+    # serializer = CustomUserSerializer(instance=user, data=data, partial=True) #works
     if serializer.is_valid():
         serializer.save()
         return response.Response(serializer.data)
@@ -194,5 +217,18 @@ def get_users(request):
         return response.Response(serializer.data)
     else:
         return response.Response(status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['DELETE'])
+def delete_user(request, pk):
+    if not request.user.is_admin:
+        return response.Response(status=status.HTTP_403_FORBIDDEN)
+
+    user = None
+    try:
+        user = CustomUser.objects.get(pk=pk)
+    except CustomUser.DoesNotExist:
+        return response.Response(status=status.HTTP_404_NOT_FOUND)
+    user.delete()
+    return response.Response(status=status.HTTP_202_ACCEPTED)
 
 """
