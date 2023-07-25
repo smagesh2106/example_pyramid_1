@@ -114,7 +114,7 @@ def get_admins(request):
 
 class AdminUsers(generics.ListAPIView):
     permission_classes = (permissions.IsAdminUser,)
-    queryset = CustomUser.objects.filter(Q(is_admin=True) & Q(is_staff=True))
+    queryset = CustomUser.objects.filter(~Q(is_superuser=True) & Q(is_admin=True))
     serializer_class = CustomUserListSerializer
     filter_backends = (filters.SearchFilter, filters.OrderingFilter)
     search_fields = ['name', 'email', 'date_of_birth']
@@ -144,13 +144,16 @@ def toggle_admin_previlege(request, pk):
         return response.Response(status=status.HTTP_403_FORBIDDEN)
 
     user = get_object_or_404(CustomUser, pk=pk)
-    print(user._meta.get_field("is_admin"))
     is_admin = request.data.get("is_admin", False)
-    is_staff = request.data.get("is_staff", False)
-    data = {"is_admin": is_admin, "is_staff": is_staff}
+
+    data = None
+    if is_admin:
+        data = {"is_admin": is_admin, "is_staff": True}
+    else:
+        data = {"is_admin": False, "is_staff": False}
     print(data)
-    serializer = CustomUserSerializer(instance=user, data=request.data, partial=True)
-    # serializer = CustomUserSerializer(instance=user, data=data, partial=True) #works
+    #serializer = CustomUserSerializer(instance=user, data=request.data, partial=True)
+    serializer = CustomUserSerializer(instance=user, data=data, partial=True) #works
     if serializer.is_valid():
         serializer.save()
         return response.Response(serializer.data)
